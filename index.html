@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A Comprehensive Penetration Testing Report of Metasploitable2 Using Kali Linux by Christian Kamler</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      color: #E2E8F0;
+      background-image: url('redhigh.jpg');
+      background-size: cover;
+      background-attachment: fixed;
+      min-height: 300vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.35);
+      z-index: -1;
+    }
+
+
+    /* ===== TOP HEADER FOR TITLE ===== */
+    header {
+      background: rgba(0, 0, 0, 0.6);
+      padding: 20px 0;
+      position: relative;
+      z-index: 2;
+      overflow: hidden;
+    }
+
+    .title-container {
+      width: 100%;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    .title-text {
+  font-size: 28px;
+  font-weight: bold;
+  text-align: center;
+  display: block;
+    }
+    
+
+    
+
+    nav {
+      display: flex;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 10px;
+      gap: 10px;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 2;
+    }
+
+    nav button {
+      background: rgba(0, 0, 0, 0.8);
+      border: 2px solid #8b0000;
+      border-radius: 6px;
+      color: #E2E8F0;
+      padding: 12px 20px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    nav button:hover {
+      background: #8b0000;
+      border-color: #ff0000;
+      color: white;
+    }
+
+    .content {
+      padding: 30px;
+      max-width: 1000px;
+      margin: 40px auto;
+      background: rgba(0, 0, 0, 0.6);
+      border-radius: 10px;
+      display: none;
+      position: relative;
+      z-index: 2;
+    }
+
+    .active {
+      display: block;
+    }
+
+    .sub-box {
+      margin-top: 20px;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 8px;
+    }
+
+    .mermaid {
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 8px;
+    }
+
+    ul {
+      padding-left: 20px;
+    }
+
+    li {
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+
+<body>
+
+
+  <header>
+    <div class="title-container">
+      <div class="title-text">
+        A Comprehensive Penetration Testing Report of Metasploitable2 Using Kali Linux by Christian Kamler
+      </div>
+    </div>
+  </header>
+
+  <nav>
+    <button onclick="showTab('overview')">Overview</button>
+    <button onclick="showTab('tools')">Tools</button>
+    <button onclick="showTab('attacks')">Attacks</button>
+    <button onclick="showTab('findings')">Findings</button>
+    <button onclick="showTab('methodologies')">Methodologies</button>
+    <button onclick="showTab('references')">References</button>
+  </nav>
+
+ <!-- OVERVIEW -->
+<div id="overview" class="content active">
+  <h2>Overview</h2>
+  <p>
+    This project documents a complete penetration test using Kali Linux against Metasploitable2,
+    following the full cybersecurity lifecycle.
+  </p>
+
+  <h3>Lab Network Diagram</h3>
+  <p>Below is a diagram of my lab setup showing the Host Machine, Kali Linux attacker, and Metasploitable2 target.</p>
+  <img src="images/diagram drawing.png" alt="Lab Network Diagram" style="width:100%; max-width:800px; border-radius:6px;">
+
+  <div class="mermaid">
+  graph LR
+  A[Reconnaissance] --> B[Scanning]
+  B --> C[Exploitation]
+  C --> D[Post-Exploitation]
+  D --> E[Reporting]
+</div>
+
+<div class="sub-box">
+  <h3>Stage Info</h3>
+  <p id="infoText">Hover over a stage above to see a description.</p>
+</div>
+
+  <!-- LAB VM SETUP -->
+  <div class="sub-box">
+    <h3>Virtual Lab Setup</h3>
+    <p>
+      To safely conduct the penetration test, I set up an isolated virtual lab using VirtualBox. 
+      This environment included the Kali Linux attacker machine and the Metasploitable2 target machine, both connected on a private internal network.
+    </p>
+
+    <p>
+      I configured the network and DHCP server using the following command:
+      <br><br>
+      <code>vboxmanage dhcpserver add --network=vmnetwork --server-ip=10.38.1.1 --lower-ip=10.38.1.110 --upper-ip=10.38.1.120 --netmask=255.255.255.0 --enable</code>
+      <br><br>
+      This ensured that both machines received internal IP addresses and could communicate with each other without exposing them to the internet.
+    </p>
+
+    <h4>Screenshot</h4>
+    <div style="display: flex; flex-direction: column; gap: 15px;">
+      <div>
+        <p><strong>Figure 1:</strong> VirtualBox lab network setup showing DHCP configuration and internal network</p>
+        <img src="images/labnetworksetup.png" alt="Lab Network Setup" style="width:100%; border-radius:6px;">
+      </div>
+    </div>
+  </div>
+
+  <!-- VIRTUAL MACHINES OVERVIEW -->
+  <div class="sub-box">
+    <h3>Virtual Machines Overview</h3>
+    <p>
+      The lab uses two main virtual machines:
+      <ul>
+        <li><strong>Kali Linux:</strong> Attack machine, equipped with tools used to exploit target machine</li>
+        <li><strong>Metasploitable2:</strong> Target machine intentionally designed with vulnerable services for testing.</li>
+      </ul>
+    </p>
+
+    <h4>Screenshot</h4>
+    <div style="display: flex; flex-direction: column; gap: 15px;">
+      <div>
+        <p><strong>Figure 2:</strong> VirtualBox showing Kali Linux (attacker) and Metasploitable2 (target) VMs</p>
+        <img src="images/VMS.png" alt="Virtual Machines: Kali Linux and Metasploitable2" style="width:100%; border-radius:6px;">
+      </div>
+    </div>
+  </div>
+</div>
+
+  <!-- TOOLS -->
+  <div id="tools" class="content">
+    <h2>Tools</h2>
+    <p>
+      In this project, several cybersecurity tools were used to perform reconnaissance,
+      scanning, exploitation, and post-exploitation. These tools allowed for identifying
+      vulnerabilities, gaining access to the system, and analyzing the target environment.
+      Additionally, multiple technologies were used in the development of this website.
+    </p>
+
+    <div class="sub-box">
+      <h3>Penetration Testing Tools</h3>
+      <ul>
+        <li><strong>Nmap:</strong> I used this tool for network discovery, port scanning, and OS/service fingerprinting.</li>
+        <li><strong>Metasploit Framework:</strong> I used this exploitation framework to attack the target machine.</li>
+        <li><strong>DirBuster / Gobuster:</strong> I used this tool for Web directory and file enumeration.</li>
+        <li><strong>Wireshark:</strong> This tool was used to capture and analyze network traffic between my attack machine and target machine.</li>
+        <li><strong>Netcat:</strong> Network interaction and communication tool.</li>
+      </ul>
+    </div>
+
+    <div class="sub-box">
+      <h3>Operating Systems & Platforms</h3>
+      <ul>
+        <li><strong>Kali Linux (Attacker):</strong> Pre-installed penetration testing OS used for scanning and exploitation.</li>
+        <li><strong>Metasploitable2 (Target):</strong> The vulnerable system I used for exploitation exercises</li>
+        <li><strong>VirtualBox:</strong> Virtualization platform hosting both machines in an isolated lab.</li>
+      </ul>
+    </div>
+
+    <div class="sub-box">
+      <h3>Web Development & Programming</h3>
+      <ul>
+        <li><strong>Visual Studio Code:</strong> IDE for coding and development.</li>
+        <li><strong>JavaScript:</strong> I used for the diagram on the overview tab using Mermaid, also for the switching tabs to show different sections, and for interactive hover effects on the overview page that provides descriptions. </li>
+        <li><strong>HTML / CSS:</strong> Structure and styling of the website.</li>
+        <li><strong>GitHub Pages:</strong> Hosting platform for the website.</li>
+      </ul>
+    </div>
+
+    <div class="sub-box">
+      <h3>Network & Lab Technologies</h3>
+      <ul>
+        <li><strong>Internal Virtual Network:</strong> Isolates lab traffic for safety and legal compliance.</li>
+        <li><strong>Static IP & DHCP Configuration:</strong> Ensures reliable communication between machines but also so it remains in an Internal Virtual Network and I'm not exposing a vulnerable machine on my actual network.</li>
+      </ul>
+    </div>
+
+    <div class="sub-box">
+      <h3>Supporting Utilities</h3>
+      <ul>
+        <li><strong>Ping, Netstat, Traceroute:</strong> Network diagnostics and connectivity checks.</li>
+        <li><strong>Screenshot & Documentation Tools:</strong> Used to capture outputs and walkthrough steps.</li>
+      </ul>
+    </div>
+  </div>
+
+ <!-- ATTACKS -->
+<div id="attacks" class="content">
+  <h2>Attacks</h2>
+  <p>
+    The Metasploitable2 virtual machine contains numerous intentionally vulnerable services.
+    The following attacks were conducted to demonstrate real-world exploitation techniques.
+  </p>
+
+  <!-- FTP BACKDOOR -->
+  <div class="sub-box">
+    <h3>FTP Backdoor (vsftpd 2.3.4)</h3>
+    <p><strong>Type:</strong> Remote Code Execution</p>
+
+    <h4>What I Did</h4>
+    <p>
+      I used the Metasploit Framework to exploit the vulnerable vsftpd 2.3.4 service. After configuring
+      the target IP, I executed the exploit, which successfully triggered the backdoor and opened a shell.
+      Running <code>whoami</code> confirmed root access.
+    </p>
+
+    <h4>Result</h4>
+    <p>Full administrative (root) access to the system was obtained.</p>
+
+    <h4>Why this works</h4>
+    <p>
+      The service contains a built-in backdoor that allows attackers to gain shell access when triggered.
+    </p>
+
+    <h4>Remediation</h4>
+    <ul>
+      <li>Upgrade or replace vulnerable vsftpd versions</li>
+      <li>Disable FTP if not required</li>
+      <li>Restrict access using firewall rules</li>
+      <li>Monitor for suspicious login attempts</li>
+    </ul>
+
+    <h4>Screenshots</h4>
+    <img src="images/screenshot 1.png" style="width:100%; border-radius:6px;">
+    <img src="images/screenshot 2.png" style="width:100%; border-radius:6px;">
+  </div>
+
+  <!-- SMB -->
+  <div class="sub-box">
+    <h3>SMB Exploitation (Misconfiguration)</h3>
+    <p><strong>Type:</strong> Unauthorized Access</p>
+
+    <h4>What I Did</h4>
+    <p>
+      I used Nmap to identify SMB services and <code>smbclient</code> to enumerate shares. Anonymous login
+      was successful, allowing access to shared directories and file uploads.
+    </p>
+
+    <h4>Result</h4>
+    <p>Unauthorized read/write access to shared directories.</p>
+
+    <h4>Why this works</h4>
+    <p>
+      SMB was configured to allow anonymous access with weak permissions.
+    </p>
+
+    <h4>Remediation</h4>
+    <ul>
+      <li>Disable anonymous access</li>
+      <li>Implement authentication and access controls</li>
+      <li>Restrict write permissions</li>
+      <li>Apply Samba security updates</li>
+    </ul>
+
+    <h4>Screenshots</h4>
+    <img src="images/SMB 1.png" style="width:100%; border-radius:6px;">
+    <img src="images/SMB 2.png" style="width:100%; border-radius:6px;">
+    <img src="images/SMB 3.png" style="width:100%; border-radius:6px;">
+    <img src="images/SMB 4.png" style="width:100%; border-radius:6px;">
+  </div>
+
+  <!-- RLOGIN -->
+  <div class="sub-box">
+    <h3>Rlogin Root Access (Misconfiguration)</h3>
+    <p><strong>Type:</strong> Unauthorized Access</p>
+
+    <h4>What I Did</h4>
+    <p>
+      I connected using <code>rlogin -l root</code> and gained immediate root access without a password.
+    </p>
+
+    <h4>Result</h4>
+    <p>Full system compromise with root privileges.</p>
+
+    <h4>Why this works</h4>
+    <p>
+      Trust relationships allowed password-less login via <code>.rhosts</code> or similar configurations.
+    </p>
+
+    <h4>Remediation</h4>
+    <ul>
+      <li>Disable Rlogin service</li>
+      <li>Remove trust relationships</li>
+      <li>Use SSH instead</li>
+      <li>Enforce authentication controls</li>
+    </ul>
+
+    <h4>Screenshots</h4>
+    <img src="images/rlogin.png" style="width:100%; border-radius:6px;">
+  </div>
+
+  <!-- DISTCC -->
+  <div class="sub-box">
+    <h3>DistCC Exploit (Attempted)</h3>
+    <p><strong>Type:</strong> Remote Code Execution</p>
+
+    <h4>What I Did</h4>
+    <p>
+      Identified open port 3632 and attempted exploitation using Metasploit.
+    </p>
+
+    <h4>Result</h4>
+    <p>No shell was obtained due to payload execution failure.</p>
+
+    <h4>Why this works</h4>
+    <p>
+      DistCC allows unauthenticated command execution if exposed.
+    </p>
+
+    <h4>Analysis</h4>
+    <p>
+      Vulnerability existed, but exploitation failed due to compatibility issues.
+    </p>
+
+    <h4>Remediation</h4>
+    <ul>
+      <li>Disable DistCC if not needed</li>
+      <li>Restrict access to trusted hosts</li>
+      <li>Patch or remove vulnerable versions</li>
+      <li>Monitor for abnormal activity</li>
+    </ul>
+
+    <h4>Screenshots</h4>
+    <img src="images/nmapfordistcc.png" style="width:100%; border-radius:6px;">
+    <img src="images/distccfail.png" style="width:100%; border-radius:6px;">
+  </div>
+
+  <!-- TOMCAT -->
+  <div class="sub-box">
+    <h3>Tomcat Manager Access (Default Credentials)</h3>
+    <p><strong>Type:</strong> Weak Authentication</p>
+
+    <h4>What I Did</h4>
+    <p>
+      Accessed the manager interface and logged in using default credentials, gaining admin control.
+    </p>
+
+    <h4>Result</h4>
+    <p>Full administrative access to deploy applications.</p>
+
+    <h4>Why this works</h4>
+    <p>
+      Default credentials were not changed, allowing unauthorized access.
+    </p>
+
+    <h4>Remediation</h4>
+    <ul>
+      <li>Change default credentials</li>
+      <li>Restrict access to the manager interface</li>
+      <li>Use role-based access control</li>
+      <li>Disable if not required</li>
+    </ul>
+
+    <h4>Screenshots</h4>
+    <img src="images/tomcat.png" style="width:100%; border-radius:6px;">
+    <img src="images/tomcatlogin.png" style="width:100%; border-radius:6px;">
+    <img src="images/tomcatloginsuccess.png" style="width:100%; border-radius:6px;">
+    <img src="images/warfile.png" style="width:100%; border-radius:6px;">
+  </div>
+
+  <!-- TELNET -->
+  <div class="sub-box">
+    <h3>Telnet (Weak Authentication)</h3>
+    <p><strong>Type:</strong> Insecure Protocol</p>
+
+    <h4>What I Did</h4>
+    <p>
+      Connected via Telnet and logged in using default credentials.
+    </p>
+
+    <h4>Result</h4>
+    <p>Unauthorized access to the system.</p>
+
+    <h4>Why this works</h4>
+    <p>
+      Telnet transmits credentials in plaintext and allowed default logins.
+    </p>
+
+    <h4>Remediation</h4>
+    <ul>
+      <li>Disable Telnet</li>
+      <li>Use SSH instead</li>
+      <li>Enforce strong passwords</li>
+      <li>Monitor login attempts</li>
+    </ul>
+
+    <h4>Screenshots</h4>
+    <img src="images/telnet.png" style="width:100%; border-radius:6px;">
+    <img src="images/telnetlogin.png" style="width:100%; border-radius:6px;">
+  </div>
+
+  <!-- PRIV ESC -->
+  <div class="sub-box">
+    <h3>Privilege Escalation</h3>
+    <p><strong>Type:</strong> Post-Exploitation</p>
+
+    <h4>What I Did</h4>
+    <p>
+      Verified access levels after exploitation. Some attacks provided root access immediately,
+      while others required escalation.
+    </p>
+
+    <h4>Result</h4>
+    <p>Demonstrated importance of privilege escalation in attacks.</p>
+
+    <h4>Why this matters</h4>
+    <p>
+      Attackers often start with limited access and escalate privileges to fully compromise systems.
+    </p>
+
+    <h4>Remediation</h4>
+    <ul>
+      <li>Enforce least privilege</li>
+      <li>Audit permissions regularly</li>
+      <li>Patch vulnerabilities</li>
+      <li>Monitor system activity</li>
+    </ul>
+
+    <h4>Screenshots</h4>
+    <img src="images/telnetlogin.png" style="width:100%; border-radius:6px;">
+  </div>
+</div>
+
+
+<!-- FINDINGS -->
+<div id="findings" class="content">
+  <h2>Key Findings</h2>
+  <p>
+    The penetration test revealed multiple critical vulnerabilities across the target system.
+    These findings demonstrate how misconfigurations, weak authentication, and outdated services
+    can lead to full system compromise.
+  </p>
+
+  <!-- CRITICAL VULNERABILITIES -->
+  <div class="sub-box">
+    <h3>Critical Vulnerabilities</h3>
+    <ul>
+      <li>FTP Backdoor (vsftpd 2.3.4) allowed remote code execution</li>
+      <li>Rlogin service enabled root access without authentication</li>
+      <li>DistCC service exposed potential remote command execution</li>
+    </ul>
+  </div>
+
+  <!-- AUTHENTICATION ISSUES -->
+  <div class="sub-box">
+    <h3>Authentication Weaknesses</h3>
+    <ul>
+      <li>Default credentials allowed unauthorized access (Telnet, Tomcat)</li>
+      <li>Weak password policies enabled easy system entry</li>
+      <li>Anonymous SMB login permitted access without credentials</li>
+    </ul>
+  </div>
+
+  <!-- MISCONFIGURATIONS -->
+  <div class="sub-box">
+    <h3>System Misconfigurations</h3>
+    <ul>
+      <li>SMB shares allowed unauthorized read/write access</li>
+      <li>Trust relationships enabled password-less login (Rlogin)</li>
+      <li>Unnecessary services were left enabled</li>
+    </ul>
+  </div>
+
+  <!-- IMPACT -->
+  <div class="sub-box">
+    <h3>Impact Assessment</h3>
+    <ul>
+      <li>Full system compromise was achieved in multiple scenarios</li>
+      <li>Attackers could gain root-level access</li>
+      <li>Sensitive data and system integrity were at risk</li>
+      <li>Multiple attack paths existed across services</li>
+    </ul>
+  </div>
+
+  <!-- OVERALL SUMMARY -->
+  <div class="sub-box">
+    <h3>Summary</h3>
+    <p>
+      The system demonstrated a high number of exploitable vulnerabilities due to poor security
+      configurations and weak authentication controls. These issues highlight the importance of
+      proper system hardening, patch management, and secure configuration practices in real-world environments.
+    </p>
+  </div>
+</div>
+
+
+<!-- METHODOLOGIES -->
+<div id="methodologies" class="content">
+  <h2>Methodologies</h2>
+  <p>
+    For this project, I followed a general pentesting process to identify vulnerabilities in my target machine and exploited them accordingly. I also provided screenshots for each step taken along the way.
+  </p>
+
+  <ul>
+    <li><strong>Reconnaissance:</strong> I used Nmap scanning to enumerate open ports and services.</li>
+    <li><strong>Enumeration:</strong> I Identified available services and misconfigurations.</li>
+    <li><strong>Exploitation:</strong> I used Metasploit and some manual commands to take advantage of the vulnerabilities I found.</li>
+    <li><strong>Post-Exploitation:</strong> After gaining access, I checked user privileges and confirmed whether or not I had root access or limited access</li>
+    <li><strong>Documentation:</strong> Screenshots and detailed notes were provided for each attack.</li>
+  </ul>
+</div>
+
+<!-- REFERENCES -->
+<div id="references" class="content">
+  <h2>References</h2>
+  <p>Here I included all the sources I used that helped me in the pentesting process as well as the construction of this website.</p>
+
+  <div class="sub-box">
+    <ul>
+      <li>
+        MDN <code>addEventListener</code> — Used as a reference for attaching event listeners such as mouseenter and mouseleave which I used in my hover script.  
+        <br>
+        URL: <a href="https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener" target="_blank">https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener</a>
+      </li>
+      <li>
+        StackOverflow discussion — Used discussion board for reference to create my tab switching script.  
+        <br>
+        URL: <a href="https://stackoverflow.com/questions/38990163/how-can-i-add-and-remove-an-active-class-to-an-element-in-pure-javascript" target="_blank">https://stackoverflow.com/questions/38990163/how-can-i-add-and-remove-an-active-class-to-an-element-in-pure-javascript</a>
+      </li>
+      <li>
+        FTP vsftpd 2.3.4 Backdoor — Provided me with information on the FTP backdoor (vsftpd 2.3.4).  
+        <br>
+        URL: <a href="https://www.rapid7.com/db/modules/exploit/unix/ftp/vsftpd_234_backdoor/" target="_blank">https://www.rapid7.com/db/modules/exploit/unix/ftp/vsftpd_234_backdoor/</a>
+      </li>
+      <li>
+        Mermaid.js tutorials — Provided code examples of using Mermaid to create my diagram on the home page.  
+        <br>
+        URL: <a href="https://mermaid.js.org/ecosystem/tutorials.html" target="_blank">https://mermaid.js.org/ecosystem/tutorials.html</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+  <!-- MERMAID for the table diagram on home page-->
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({
+      startOnLoad: true,
+      securityLevel: 'loose'
+    });
+  </script>
+
+  <!-- JavaScript tab switching SCRIPT -->
+  <script>
+    function showTab(tabId) {
+      document.querySelectorAll('.content').forEach(tab => tab.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+    }
+  </script>
+
+  <!-- JavaScript HOVER SCRIPT for my diagram-->
+  <script>
+    const descriptions = {
+      "Reconnaissance": "Information gathering phase: collecting IPs, domains, and target data.",
+      "Scanning": "Identify open ports, services, and vulnerabilities using tools like Nmap.",
+      "Exploitation": "Use vulnerabilities to gain unauthorized system access.",
+      "Post-Exploitation": "Maintain access, escalate privileges, and extract data.",
+      "Reporting": "Document findings and provide security recommendations. This website is my way of documenting my findings :)."
+    };
+
+    function attachHoverEvents() {
+      const nodes = document.querySelectorAll(".mermaid svg g.node");
+
+      nodes.forEach(node => {
+        const label = node.textContent.trim();
+
+        node.addEventListener("mouseenter", () => {
+          if (descriptions[label]) {
+            document.getElementById("infoText").textContent = descriptions[label];
+          }
+        });
+
+        node.addEventListener("mouseleave", () => {
+          document.getElementById("infoText").textContent =
+            "Hover over a stage above to see a description.";
+        });
+      });
+    }
+
+    setTimeout(attachHoverEvents, 1200);
+  </script>
+
+  
+
+</body>
+</html>
